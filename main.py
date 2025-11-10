@@ -54,27 +54,19 @@ def load_data():
             # Mostrar preview dos dados com toggle
             st.success("✅ Arquivo carregado com sucesso!")
             
-            # # Checkbox para mostrar/ocultar preview
-            # show_preview = st.checkbox("👁️ Mostrar preview dos dados (primeiras 5 linhas)", value=True)
-            
-            # if show_preview:
-            #     st.write("📋 **Preview dos dados:**")
-            #     st.dataframe(df.head())
-
             # Checkbox para mostrar/ocultar preview
-            show_preview = st.checkbox("📋 Resumo da Análise de KPIs de Manutenção)", value=True)
+            show_preview = st.checkbox("📋 Resumo da Análise de KPIs de Manutenção", value=True)
             
-            if show_preview: st.write(""" 
-            
-            No período de maio a agosto de 2025, a análise dos dados de manutenção revelou uma disponibilidade operacional crítica de 42,89%, com 20 paradas registradas e tempos médios de reparo (MTTR) elevados (108,10h), superando o tempo entre falhas (MTBF de 1945,8h). 
-            
-            A maioria das paradas (95,2%) concentrou-se no horário administrativo, com pico às 08h. 
-                                      
-            A Manipuladora foi o equipamento mais problemático, responsável por 47,1% das paradas. As principais causas incluem substituição de mangueiras hidráulicas e falhas mecânicas. A Pirâmide de Bird apontou uma base significativa de atos inseguros, indicando oportunidades de prevenção." "Recomenda-se revisão da manutenção preventiva, otimização do estoque de peças e atenção ao horário de pico para elevar a confiabilidade e a segurança operacional.""")
-
+            if show_preview:
+                st.write(""" 
+                No período de maio a agosto de 2025, a análise dos dados de manutenção revelou uma disponibilidade operacional crítica de 42,89%, com 20 paradas registradas e tempos médios de reparo (MTTR) elevados (108,10h), superando o tempo entre falhas (MTBF de 1945,8h). 
+                
+                A maioria das paradas (95,2%) concentrou-se no horário administrativo, com pico às 08h. 
+                                          
+                A Manipuladora foi o equipamento mais problemático, responsável por 47,1% das paradas. As principais causas incluem substituição de mangueiras hidráulicas e falhas mecânicas. A Pirâmide de Bird apontou uma base significativa de atos inseguros, indicando oportunidades de prevenção. "Recomenda-se revisão da manutenção preventiva, otimização do estoque de peças e atenção ao horário de pico para elevar a confiabilidade e a segurança operacional.""")
 
             # Mostrar informações do dataset
-            st.markdown("## 📊 **Informações do dataset:**")
+            st.markdown("## 📊 Informações do dataset:")
             col_info1, col_info2, col_info3 = st.columns(3)
             with col_info1:
                 st.write(f"**Total de registros:** {len(df)}")
@@ -94,7 +86,7 @@ def load_data():
     else:
         # Instruções para o usuário
         st.info("""
-        📝 **Instruções para upload:**
+        📝 Instruções para upload:
         1. Clique em "Browse files" ou arraste seu arquivo Excel
         2. O arquivo deve conter pelo menos as colunas:
            - `Data Início` (obrigatório)
@@ -104,7 +96,7 @@ def load_data():
         """)
         
         # Exemplo de estrutura esperada
-        st.write("📋 **Exemplo de estrutura esperada:**")
+        st.write("📋 Exemplo de estrutura esperada:")
         exemplo_data = {
             'Data Início': ['2025-05-05 09:00:00', '2025-05-12 08:30:00'],
             'Data Fim': ['2025-05-05 15:00:00', '2025-05-13 09:50:00'],
@@ -318,7 +310,7 @@ if 'Data Início' in df.columns and len(periodo) == 2:
         st.error(f"Erro ao aplicar filtro de período: {e}")
 
 # MOSTRAR INFORMAÇÕES SOBRE FILTROS - para debug
-st.sidebar.info(f"📊 **Registros após filtros:** {len(df_filtrado)}/{len(df)}")
+st.sidebar.info(f"📊 Registros após filtros: {len(df_filtrado)}/{len(df)}")
 
 # Verificar se há dados após filtragem
 if len(df_filtrado) == 0:
@@ -408,13 +400,11 @@ else:
 st.markdown("---")
 st.markdown("### 🕐 Análise de Horários de Pico - Horário Administrativo")
 
-
-
 # Estatísticas sobre horário administrativo
 total_paradas_admin = len(df_admin)
 percentual_admin = (total_paradas_admin / len(df)) * 100 if len(df) > 0 else 0
 
-st.info(f"📊 **{total_paradas_admin} ocorrências ({percentual_admin:.1f}%) em horário administrativo**")
+st.info(f"📊 {total_paradas_admin} ocorrências ({percentual_admin:.1f}%) em horário administrativo")
 
 col_pico1, col_pico2 = st.columns(2)
 
@@ -444,74 +434,116 @@ with col_pico1:
 with col_pico2:
     # Distribuição por hora do dia (apenas horário administrativo)
     df_admin_filtrado = df_filtrado[df_filtrado['Turno'] != 'Fora do Expediente']
-    paradas_por_hora = df_admin_filtrado['Hora'].value_counts().sort_index()
     
-    fig_hora = px.bar(
-        x=paradas_por_hora.index.astype(str) + ':00',
-        y=paradas_por_hora.values,
-        title="⏰ Paradas por Hora do Dia (Expediente)",
-        labels={'x': 'Hora do Dia', 'y': 'Número de Paradas'},
-        color=paradas_por_hora.values,
-        color_continuous_scale='Blues'
-    )
-    st.plotly_chart(fig_hora, use_container_width=True)
+    # Inicializar hora_pico_val com valor padrão
+    hora_pico_val = 14
     
-    # Horário de pico
-    if len(paradas_por_hora) > 0:
-        hora_pico = paradas_por_hora.idxmax()
-        total_pico = paradas_por_hora.max()
-        st.metric("🕐 Horário de Pico", f"{hora_pico:02d}:00", f"{total_pico} paradas")
-    
+    if len(df_admin_filtrado) > 0:
+        paradas_por_hora = df_admin_filtrado['Hora'].value_counts().sort_index()
+        
+        fig_hora = px.bar(
+            x=paradas_por_hora.index.astype(str) + ':00',
+            y=paradas_por_hora.values,
+            title="⏰ Paradas por Hora do Dia (Expediente)",
+            labels={'x': 'Hora do Dia', 'y': 'Número de Paradas'},
+            color=paradas_por_hora.values,
+            color_continuous_scale='Blues'
+        )
+        st.plotly_chart(fig_hora, use_container_width=True)
+        
+        # Horário de pico - COM TRATAMENTO DE ERRO
+        if len(paradas_por_hora) > 0:
+            try:
+                hora_pico = paradas_por_hora.idxmax()
+                total_pico = paradas_por_hora.max()
+                
+                # Garantir que hora_pico seja inteiro
+                if hora_pico is not None:
+                    hora_pico = int(hora_pico)
+                    hora_pico_val = hora_pico  # Atualizar a variável global
+                    st.metric("🕐 Horário de Pico", f"{hora_pico:02d}:00", f"{total_pico} paradas")
+                else:
+                    st.metric("🕐 Horário de Pico", "N/A", "Sem dados")
+                    
+            except (ValueError, TypeError) as e:
+                st.metric("🕐 Horário de Pico", "Erro", "Dados inválidos")
+                st.error(f"Erro ao calcular horário de pico: {e}")
+        else:
+            st.metric("🕐 Horário de Pico", "N/A", "Sem paradas")
+    else:
+        st.warning("⚠️ Não há dados no horário administrativo para análise")
+        
     # Análise de tendência por dia da semana
-    df_filtrado['Dia_Semana'] = df_filtrado['Data Início'].dt.day_name()
-    dias_ordem = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    dias_portugues = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
-    
-    paradas_por_dia = df_filtrado['Dia_Semana'].value_counts().reindex(dias_ordem, fill_value=0)
-    paradas_por_dia.index = dias_portugues
-    
-    fig_dia = px.bar(
-        x=paradas_por_dia.index,
-        y=paradas_por_dia.values,
-        title="📅 Paradas por Dia da Semana",
-        labels={'x': 'Dia da Semana', 'y': 'Número de Paradas'},
-        color=paradas_por_dia.values,
-        color_continuous_scale='Blues'
-    )
-    st.plotly_chart(fig_dia, use_container_width=True)
+    if len(df_filtrado) > 0:
+        try:
+            df_filtrado['Dia_Semana'] = df_filtrado['Data Início'].dt.day_name()
+            dias_ordem = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+            dias_portugues = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+            
+            paradas_por_dia = df_filtrado['Dia_Semana'].value_counts().reindex(dias_ordem, fill_value=0)
+            paradas_por_dia.index = dias_portugues
+            
+            fig_dia = px.bar(
+                x=paradas_por_dia.index,
+                y=paradas_por_dia.values,
+                title="📅 Paradas por Dia da Semana",
+                labels={'x': 'Dia da Semana', 'y': 'Número de Paradas'},
+                color=paradas_por_dia.values,
+                color_continuous_scale='Blues'
+            )
+            st.plotly_chart(fig_dia, use_container_width=True)
+        except Exception as e:
+            st.error(f"Erro ao analisar dias da semana: {e}")
 
-# Análise detalhada do horário de pico
+# Análise detalhada do horário de pico - COM TRATAMENTO
 st.markdown("#### 🔍 Análise Detalhada do Horário de Pico")
 
-if len(paradas_por_hora) > 0:
-    hora_pico = paradas_por_hora.idxmax()
-    paradas_pico = df_filtrado[df_filtrado['Hora'] == hora_pico]
-    
-    col_pico3, col_pico4, col_pico5 = st.columns(3)
-    
-    with col_pico3:
-        # Equipamentos no horário de pico
-        if 'Equipamento' in paradas_pico.columns:
-            equip_pico = paradas_pico['Equipamento'].value_counts().head(5)
-            st.write("**🔧 Equipamentos no Pico:**")
-            for equip, count in equip_pico.items():
-                st.write(f"- {equip}: {count} parada(s)")
-    
-    with col_pico4:
-        # Locais no horário de pico
-        if 'Local' in paradas_pico.columns:
-            local_pico = paradas_pico['Local'].value_counts().head(3)
-            st.write("**🏭 Locais no Pico:**")
-            for local, count in local_pico.items():
-                st.write(f"- {local}: {count} parada(s)")
-    
-    with col_pico5:
-        # Causas no horário de pico
-        if 'Causa' in paradas_pico.columns:
-            causa_pico = paradas_pico['Causa'].value_counts().head(3)
-            st.write("**⚡ Causas no Pico:**")
-            for causa, count in causa_pico.items():
-                st.write(f"- {causa}: {count} parada(s)")
+if 'hora_pico_val' in locals() and 'df_filtrado' in locals():
+    try:
+        hora_pico_int = int(hora_pico_val)  # Garante que é inteiro
+        paradas_pico = df_filtrado[df_filtrado['Hora'] == hora_pico_int]
+        
+        if len(paradas_pico) > 0:
+            col_pico3, col_pico4, col_pico5 = st.columns(3)
+            
+            with col_pico3:
+                # Equipamentos no horário de pico
+                if 'Equipamento' in paradas_pico.columns:
+                    equip_pico = paradas_pico['Equipamento'].value_counts().head(5)
+                    st.write("**🔧 Equipamentos no Pico:**")
+                    for equip, count in equip_pico.items():
+                        st.write(f"- {equip}: {count} parada(s)")
+                else:
+                    st.write("**🔧 Equipamentos no Pico:**")
+                    st.write("- Coluna 'Equipamento' não disponível")
+            
+            with col_pico4:
+                # Locais no horário de pico
+                if 'Local' in paradas_pico.columns:
+                    local_pico = paradas_pico['Local'].value_counts().head(3)
+                    st.write("**🏭 Locais no Pico:**")
+                    for local, count in local_pico.items():
+                        st.write(f"- {local}: {count} parada(s)")
+                else:
+                    st.write("**🏭 Locais no Pico:**")
+                    st.write("- Coluna 'Local' não disponível")
+            
+            with col_pico5:
+                # Causas no horário de pico
+                if 'Causa' in paradas_pico.columns:
+                    causa_pico = paradas_pico['Causa'].value_counts().head(3)
+                    st.write("**⚡ Causas no Pico:**")
+                    for causa, count in causa_pico.items():
+                        st.write(f"- {causa}: {count} parada(s)")
+                else:
+                    st.write("**⚡ Causas no Pico:**")
+                    st.write("- Coluna 'Causa' não disponível")
+        else:
+            st.info("ℹ️ Não há dados detalhados para o horário de pico")
+    except Exception as e:
+        st.error(f"Erro na análise detalhada do horário de pico: {e}")
+else:
+    st.info("ℹ️ Não há dados suficientes para análise detalhada do horário de pico")
 
 # Análise de padrões temporais
 st.markdown("#### 📈 Padrões Temporais das Paradas")
@@ -520,35 +552,38 @@ col_temp1, col_temp2 = st.columns(2)
 
 with col_temp1:
     # Paradas por mês
-    df_filtrado['Mês'] = df_filtrado['Data Início'].dt.strftime('%Y-%m')
-    paradas_por_mes = df_filtrado['Mês'].value_counts().sort_index()
-    
-    fig_mes = px.line(
-        x=paradas_por_mes.index,
-        y=paradas_por_mes.values,
-        title="📅 Tendência de Paradas por Mês",
-        labels={'x': 'Mês', 'y': 'Número de Paradas'},
-        markers=True
-    )
-    st.plotly_chart(fig_mes, use_container_width=True)
+    if len(df_filtrado) > 0:
+        df_filtrado['Mês'] = df_filtrado['Data Início'].dt.strftime('%Y-%m')
+        paradas_por_mes = df_filtrado['Mês'].value_counts().sort_index()
+        
+        fig_mes = px.line(
+            x=paradas_por_mes.index,
+            y=paradas_por_mes.values,
+            title="📅 Tendência de Paradas por Mês",
+            labels={'x': 'Mês', 'y': 'Número de Paradas'},
+            markers=True
+        )
+        st.plotly_chart(fig_mes, use_container_width=True)
 
 with col_temp2:
     # Distribuição por tipo de dia (útil vs final de semana)
-    def classificar_tipo_dia(dia):
-        if dia in ['Saturday', 'Sunday']:
-            return 'Final de Semana'
-        else:
-            return 'Dia Útil'
-    
-    df_filtrado['Tipo_Dia'] = df_filtrado['Dia_Semana'].apply(classificar_tipo_dia)
-    paradas_por_tipo_dia = df_filtrado['Tipo_Dia'].value_counts()
-    
-    fig_tipo_dia = px.pie(
-        values=paradas_por_tipo_dia.values,
-        names=paradas_por_tipo_dia.index,
-        title="📊 Paradas: Dia Útil vs Final de Semana"
-    )
-    st.plotly_chart(fig_tipo_dia, use_container_width=True)
+    if len(df_filtrado) > 0:
+        def classificar_tipo_dia(dia):
+            if dia in ['Saturday', 'Sunday']:
+                return 'Final de Semana'
+            else:
+                return 'Dia Útil'
+        
+        if 'Dia_Semana' in df_filtrado.columns:
+            df_filtrado['Tipo_Dia'] = df_filtrado['Dia_Semana'].apply(classificar_tipo_dia)
+            paradas_por_tipo_dia = df_filtrado['Tipo_Dia'].value_counts()
+            
+            fig_tipo_dia = px.pie(
+                values=paradas_por_tipo_dia.values,
+                names=paradas_por_tipo_dia.index,
+                title="📊 Paradas: Dia Útil vs Final de Semana"
+            )
+            st.plotly_chart(fig_tipo_dia, use_container_width=True)
 
 # PIRÂMIDE DE BIRD
 st.markdown("---")
@@ -595,7 +630,7 @@ st.plotly_chart(fig_piramide, use_container_width=True)
 
 # ANÁLISE DE PARETO - NOVA SEÇÃO ADICIONADA
 st.markdown("---")
-st.markdown("### 📊 Principais Análise Causas de Parada")
+st.markdown("### 📊 Análise de Pareto - Principais Causas de Parada")
 
 if len(df_filtrado) > 0:
     # Selecionar a coluna para análise de Pareto
@@ -756,12 +791,7 @@ if show_charts:
             )
             st.plotly_chart(fig_causas, use_container_width=True)
 
-
-
 # Análise de Regressão Linear para Previsão de Produtividade
-
-# Análise de Regressão Linear para Previsão de Produtividade
-
 st.markdown("## 🔬 Análise de Regressão Linear para Previsão de Produtividade")
 
 col_treino1, col_treino2 = st.columns(2)
@@ -791,16 +821,18 @@ if var_alvo and vars_exp:
 else:
     st.info("Selecione o alvo e ao menos uma variável explicativa para rodar a regressão.")
 
-
-
-
 # Recomendações finais baseadas na análise de horário administrativo
 st.markdown("---")
 st.markdown("### 🎯 Recomendações Estratégicas - Horário Administrativo")
 
 # Encontrar turno e hora de pico para recomendações específicas
 turno_pico = paradas_por_turno.index[0] if len(paradas_por_turno) > 0 else "Tarde"
-hora_pico_val = paradas_por_hora.idxmax() if len(paradas_por_hora) > 0 else 14
+
+# CORREÇÃO: Garantir que hora_pico_val seja inteiro e tenha valor padrão
+try:
+    hora_pico_val = int(hora_pico_val)  # Converter para inteiro
+except (NameError, ValueError, TypeError):
+    hora_pico_val = 14  # Valor padrão se variável não existir ou conversão falhar
 
 recomendacoes = {
     "Prioridade Alta": [
@@ -918,4 +950,4 @@ Princípio 80/20 onde 20% das causas geram 80% dos problemas
 """)
 
 st.sidebar.markdown("---")
-st.sidebar.info("📊 **Dashboard desenvolvido para análise de KPIs de manutenção**")
+st.sidebar.info("📊 Dashboard desenvolvido para análise de KPIs de manutenção")
